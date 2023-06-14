@@ -3,6 +3,7 @@ import 'dart:collection';
 import 'dart:io';
 
 import 'package:collection/collection.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:immich_mobile/modules/backup/models/backup_album.model.dart';
@@ -20,6 +21,7 @@ import 'package:isar/isar.dart';
 import 'package:logging/logging.dart';
 import 'package:openapi/api.dart';
 import 'package:photo_manager/photo_manager.dart';
+
 
 final albumServiceProvider = Provider(
   (ref) => AlbumService(
@@ -256,6 +258,31 @@ class AlbumService {
           await _db.albums.put(album);
           await album.sharedUsers.save();
         });
+        return true;
+      }
+    } catch (e) {
+      debugPrint("Error addAdditionalUserToAlbum  ${e.toString()}");
+    }
+    return false;
+  }
+
+  Future<bool> addShareLinkToAlbum(
+    Album album,
+  ) async {
+    try {
+      final result = await _apiService.albumApi.createAlbumSharedLink(
+        CreateAlbumShareLinkDto(albumId: album.remoteId),
+      );
+      if (result != null) {
+        album.shared = result.shared;
+        await _db.writeTxn(() async {
+          await _db.albums.put(album);
+          await album.shared.save();
+        });
+        final endpoint = Store.tryGet(StoreKey.serverEndpoint);
+        if (endpoint != null && endpoint.isNotEmpty) {
+          await Clipboard.setData(ClipboardData(text: endpoint+result.key))
+        }
         return true;
       }
     } catch (e) {

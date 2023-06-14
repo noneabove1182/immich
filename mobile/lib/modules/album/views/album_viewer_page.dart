@@ -109,6 +109,18 @@ class AlbumViewerPage extends HookConsumerWidget {
       }
     }
 
+    void onAddShareLinkPressed(Album album) async {
+
+      ImmichLoadingOverlayController.appLoader.show();
+
+      var isSuccess = await ref
+          .watch(albumServiceProvider)
+          .addAdditionalUserToAlbum(sharedUserIds, album);
+
+      ImmichLoadingOverlayController.appLoader.hide();
+      
+    }
+
     Widget buildControlButton(Album album) {
       return Padding(
         padding: const EdgeInsets.only(left: 16.0, top: 8, bottom: 8),
@@ -128,6 +140,11 @@ class AlbumViewerPage extends HookConsumerWidget {
                   onPressed: () => onAddUsersPressed(album),
                   labelText: "album_viewer_page_share_add_users".tr(),
                 ),
+                AlbumActionOutlinedButton(
+                  iconData: Icons.share_add_photos,
+                  onPressed: () => onAddShareLinkPressed(album),
+                  labelText: "create_shared_album_page_share".tr(),
+                )
             ],
           ),
         ),
